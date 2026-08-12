@@ -43,9 +43,10 @@ export PATH="/opt/fl/flutter/bin:$PATH" && flutter pub get
 ```bash
 export PATH="/opt/fl/flutter/bin:$PATH"
 flutter analyze                       # المتوقَّع: صفر أخطاء · 12 ملاحظة كلها في ملفات زملاء
-flutter test --reporter=failures-only # المتوقَّع: 119/119 ناجح
+flutter test --reporter=failures-only # المتوقَّع: 153/153 ناجح
+CHROME_EXECUTABLE=<chrome> flutter test --platform chrome test/  # 127/127 في متصفح حقيقي
 cd test/rules && npm install && npm test   # المتوقَّع: 33/33 ناجح (يحتاج Java)
-flutter build web --release           # المتوقَّع: يبنى بنجاح (نشر Vercel)
+flutter build web --release --no-web-resources-cdn   # نفس ما يفعله سكربت Vercel
 ```
 
 > ملفات الموديول نفسها **لا تُنتج أي ملاحظة تحليل**. أي ملاحظة جديدة فيها
@@ -68,9 +69,13 @@ flutter build web --release           # المتوقَّع: يبنى بنجاح 
 | نماذج الاختبارات | `admission/exam_papers/` | ✅ |
 | مساعد التخصص + محاكي «ماذا لو؟» | `admission/matcher/` | ✅ |
 
-**الأرقام:** 66 ملفاً · 9,644 سطراً · 119 اختباراً (95 منطق + 24 ودجت) ·
-33 اختبار قواعد أمان · 243 مفتاح ترجمة × لغتين · صفر مجموعات Firestore
-قائمة عُدِّلت.
+**الأرقام:** 66 ملفاً · 9,644 سطراً · 153 اختباراً (95 منطق + 27 نماذج +
+7 حراس معمارية + 24 ودجت) · 33 اختبار قواعد أمان · 243 مفتاح ترجمة × لغتين
+· صفر مجموعات Firestore قائمة عُدِّلت.
+
+> **حراس القواعد:** `test/admission/admission_architecture_test.dart` يفشل
+> إن كُسرت أي من قواعد هذا الملف (لا `dart:io` · سقف 300 سطر · لا `print` ·
+> لا Firestore في شاشة · تطابق الترجمتين). لا تُعطّله — أصلح المخالفة.
 
 **كل المراحل موثّقة:** `docs/admission_phase_{1..8}_explanation.md`.
 
