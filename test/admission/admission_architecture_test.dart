@@ -17,6 +17,7 @@ void main() {
   final moduleDirectories = [
     Directory('lib/features/admission'),
     Directory('lib/core/services'),
+    Directory('lib/core/startup'),
   ];
 
   /// ملفات الموديول وحدها — خدمات الزملاء في `core/services` مستثناة.
@@ -152,13 +153,19 @@ void main() {
       );
     });
 
-    test('كل مفتاح admission مستخدم في الكود موجود في اللغتين', () {
+    test('كل مفتاح مستخدم بـ .tr() في التطبيق كله موجود في اللغتين', () {
       // هذا ما يمنع ظهور `admission.housing.price` نصاً خاماً على شاشة
       // الطالب. اختبارات الودجت تمسك المفاتيح المعروضة فعلاً، وهذا يمسك
       // كل المفاتيح حتى ما لم يُعرض في اختبار.
+      //
+      // والفحص يشمل **التطبيق كله** لا الموديول وحده: المفتاح الناقص في
+      // شاشة زميل يظهر للطالب نفسه، ولا فرق عنده من كتبه. وقد تُحقِّق أن
+      // المشروع نظيف اليوم، فالفحص لا يفشل على شيء قائم.
       final arabic = loadKeys('ar').keys.toSet();
       final english = loadKeys('en').keys.toSet();
-      final pattern = RegExp(r'''['"](admission\.[A-Za-z0-9_.]+)['"]''');
+      final pattern = RegExp(
+        '''['"]([A-Za-z][A-Za-z0-9_.]*)['"]\\s*\\.tr\\(''',
+      );
       final used = <String>{};
 
       for (final entity in Directory('lib').listSync(recursive: true)) {
@@ -168,7 +175,7 @@ void main() {
         }
       }
 
-      expect(used, isNotEmpty);
+      expect(used.length, greaterThan(200));
       expect(used.difference(arabic), isEmpty, reason: 'ناقص في ar.json');
       expect(used.difference(english), isEmpty, reason: 'ناقص في en.json');
     });

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar" dir="rtl">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,21 +18,159 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="StuStep — تطبيق الطالب الجامعي">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="stustep">
+  <meta name="apple-mobile-web-app-title" content="StuStep">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>stustep</title>
+  <title>StuStep</title>
   <link rel="manifest" href="manifest.json">
+
+  <!--
+    ===================================================================
+    شاشة الإقلاع الاحتياطية — طبقة HTML خالصة
+    ===================================================================
+
+    لماذا بلغة HTML لا بلغة Flutter؟
+
+    لأن هناك صنفاً من الأعطال يقع **قبل أن يعمل كود Dart إطلاقاً**:
+    `firebase_core_web` يجلب حزم Firebase JS من `gstatic.com` أثناء تسجيل
+    الإضافات، أي قبل استدعاء `main()`. فإذا تعذّر جلبها انهار الإقلاع كله،
+    ولا تُنفَّذ ولا سطر واحد من معالجة الأخطاء المكتوبة بـ Dart.
+
+    تُحقِّق من ذلك عملياً في متصفح على شبكة تحجب `gstatic.com`: المحرّك
+    يُقلع، ثم تتوقف الصفحة **بيضاء صامتة** بلا أن تُطبع رسالة واحدة من
+    `AppStartup`. أي أن `try/catch` و`timeout` في Dart — مع ضرورتهما
+    لأعطال ما بعد الإقلاع — لا يمسّان هذه الحالة إطلاقاً.
+
+    ولذلك تعالَج هنا: نصّ ظاهر منذ اللحظة الأولى، يتحوّل إلى رسالة واضحة
+    مع زر إعادة تحميل إن لم يُرسم أول إطار خلال مهلة معقولة. ويُزال فوراً
+    عند وصول `flutter-first-frame`، فلا يظهر منه شيء في الحالة الطبيعية.
+    ===================================================================
+  -->
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body { background: #ffffff; }
+
+    #boot-status {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      padding: 28px;
+      box-sizing: border-box;
+      text-align: center;
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+      color: #1f2430;
+      background: #ffffff;
+      z-index: 2147483647;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body { background: #12141a; }
+      #boot-status { background: #12141a; color: #e8eaf0; }
+    }
+
+    #boot-spinner {
+      width: 42px;
+      height: 42px;
+      border: 3px solid rgba(128, 128, 128, 0.28);
+      border-top-color: #6200ee;
+      border-radius: 50%;
+      animation: boot-spin 0.9s linear infinite;
+    }
+
+    @keyframes boot-spin { to { transform: rotate(360deg); } }
+
+    /* يحترم تفضيل المستخدم بتقليل الحركة بدل فرض دوران دائم. */
+    @media (prefers-reduced-motion: reduce) {
+      #boot-spinner { animation-duration: 3s; }
+    }
+
+    #boot-status .boot-title { font-size: 17px; font-weight: 700; }
+    #boot-status .boot-body {
+      font-size: 14px;
+      line-height: 1.7;
+      max-width: 34rem;
+      opacity: 0.78;
+    }
+    #boot-status .boot-en { font-size: 12.5px; opacity: 0.6; direction: ltr; }
+
+    #boot-reload {
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: #ffffff;
+      background: #6200ee;
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 30px;
+      cursor: pointer;
+    }
+
+    #boot-reload:hover { background: #7722f0; }
+
+    /* الحالة الافتراضية: دوّارة فقط. رسالة العطل مخفية حتى تنتهي المهلة. */
+    #boot-status[data-state="loading"] .boot-failed { display: none; }
+    #boot-status[data-state="failed"] #boot-spinner { display: none; }
+  </style>
 </head>
 <body>
+  <div id="boot-status" data-state="loading" role="status" aria-live="polite">
+    <div id="boot-spinner"></div>
+
+    <div class="boot-failed">
+      <div class="boot-title">تعذّر تشغيل التطبيق</div>
+      <p class="boot-body">
+        لم تكتمل عملية التحميل. تحقّق من اتصالك بالإنترنت ثم أعد تحميل الصفحة.
+        وإذا تكرّر الأمر فقد تكون شبكتك تحجب بعض الموارد التي يحتاجها التطبيق.
+      </p>
+      <p class="boot-en">
+        StuStep could not finish loading. Check your connection and reload.
+      </p>
+    </div>
+
+    <button id="boot-reload" class="boot-failed" type="button">
+      إعادة تحميل الصفحة
+    </button>
+  </div>
+
+  <script>
+    (function () {
+      var status = document.getElementById('boot-status');
+      if (!status) return;
+
+      // المهلة سخيّة عمداً: إظهار رسالة عطل لمستخدم على اتصال بطيء وهو
+      // يُحمّل فعلاً أسوأ من انتظاره بضع ثوانٍ إضافية.
+      var BOOT_TIMEOUT_MS = 25000;
+
+      var timer = setTimeout(function () {
+        status.setAttribute('data-state', 'failed');
+      }, BOOT_TIMEOUT_MS);
+
+      // يُطلقه محرّك Flutter عند رسم أول إطار — أي أن التطبيق يعمل فعلاً.
+      window.addEventListener('flutter-first-frame', function () {
+        clearTimeout(timer);
+        status.remove();
+      });
+
+      document.getElementById('boot-reload').addEventListener(
+        'click',
+        function () { window.location.reload(); }
+      );
+    })();
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

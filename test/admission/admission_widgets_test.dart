@@ -13,6 +13,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:stustep/core/startup/startup_error_screen.dart';
 import 'package:stustep/features/admission/exam_papers/widgets/exam_paper_card.dart';
 import 'package:stustep/features/admission/housing/widgets/housing_card.dart';
 import 'package:stustep/features/admission/housing/widgets/housing_form_fields.dart';
@@ -397,6 +398,73 @@ void main() {
       expect(find.textContaining('2025'), findsWidgets);
       expect(find.textContaining('MB'), findsWidgets);
       expectNoRawTranslationKeys();
+    });
+  });
+
+  // ===================== شاشة فشل الإقلاع =====================
+
+  group('StartupErrorScreen — بديل الصفحة البيضاء', () {
+    testWidgets('تعرض سبباً مفهوماً وزر إعادة محاولة، لا نصاً تقنياً', (
+      tester,
+    ) async {
+      await pumpLocalized(
+        tester,
+        StartupErrorScreen(
+          details: '[core/no-app] Failed to fetch firebase-app.js',
+          onRetry: () async => null,
+          onReady: (_) => const SizedBox.shrink(),
+        ),
+        isFullScreen: true,
+      );
+
+      // الرسالة بلغة المستخدم، والتفصيل التقني مطويّ افتراضياً لا مفروض.
+      expect(find.text('إعادة المحاولة'), findsOneWidget);
+      expect(find.textContaining('core/no-app'), findsNothing);
+      expectNoRawTranslationKeys();
+    });
+
+    testWidgets('زر التفاصيل يكشف نصّ الخطأ التقني لمن يريده', (tester) async {
+      await pumpLocalized(
+        tester,
+        StartupErrorScreen(
+          details: '[core/no-app] Failed to fetch firebase-app.js',
+          onRetry: () async => null,
+          onReady: (_) => const SizedBox.shrink(),
+        ),
+        isFullScreen: true,
+      );
+
+      await tester.tap(find.text('التفاصيل التقنية'));
+      await tester.pump();
+
+      expect(find.textContaining('core/no-app'), findsOneWidget);
+    });
+
+    testWidgets('فشل إعادة المحاولة يُحدّث السبب ولا يترك الشاشة معلّقة', (
+      tester,
+    ) async {
+      await pumpLocalized(
+        tester,
+        StartupErrorScreen(
+          details: 'الخطأ الأول',
+          onRetry: () async => 'الخطأ الثاني',
+          onReady: (_) => const SizedBox.shrink(),
+        ),
+        isFullScreen: true,
+      );
+
+      await tester.tap(find.text('إعادة المحاولة'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      // عودة نصّ الزر إلى «إعادة المحاولة» تعني أن الشاشة خرجت من حالة
+      // الانتظار — لا دوّارة أبدية تترك المستخدم بلا مخرج.
+      expect(find.text('إعادة المحاولة'), findsOneWidget);
+      expect(find.text('جارٍ إعادة المحاولة…'), findsNothing);
+
+      await tester.tap(find.text('التفاصيل التقنية'));
+      await tester.pump();
+      expect(find.textContaining('الخطأ الثاني'), findsOneWidget);
     });
   });
 

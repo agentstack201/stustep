@@ -43,7 +43,7 @@ export PATH="/opt/fl/flutter/bin:$PATH" && flutter pub get
 ```bash
 export PATH="/opt/fl/flutter/bin:$PATH"
 flutter analyze                       # المتوقَّع: صفر أخطاء · 12 ملاحظة كلها في ملفات زملاء
-flutter test --reporter=failures-only # المتوقَّع: 153/153 ناجح
+flutter test --reporter=failures-only # المتوقَّع: 156/156 ناجح
 CHROME_EXECUTABLE=<chrome> flutter test --platform chrome test/  # 127/127 في متصفح حقيقي
 cd test/rules && npm install && npm test   # المتوقَّع: 33/33 ناجح (يحتاج Java)
 flutter build web --release --no-web-resources-cdn   # نفس ما يفعله سكربت Vercel
@@ -69,9 +69,9 @@ flutter build web --release --no-web-resources-cdn   # نفس ما يفعله س
 | نماذج الاختبارات | `admission/exam_papers/` | ✅ |
 | مساعد التخصص + محاكي «ماذا لو؟» | `admission/matcher/` | ✅ |
 
-**الأرقام:** 66 ملفاً · 9,644 سطراً · 153 اختباراً (95 منطق + 27 نماذج +
-7 حراس معمارية + 24 ودجت) · 33 اختبار قواعد أمان · 243 مفتاح ترجمة × لغتين
-· صفر مجموعات Firestore قائمة عُدِّلت.
+**الأرقام:** 68 ملفاً · 156 اختباراً (95 منطق + 27 نماذج + 7 حراس معمارية
++ 27 ودجت) · 33 اختبار قواعد أمان · 248 مفتاح ترجمة × لغتين · صفر مجموعات
+Firestore قائمة عُدِّلت.
 
 > **حراس القواعد:** `test/admission/admission_architecture_test.dart` يفشل
 > إن كُسرت أي من قواعد هذا الملف (لا `dart:io` · سقف 300 سطر · لا `print` ·
@@ -95,7 +95,11 @@ flutter build web --release --no-web-resources-cdn   # نفس ما يفعله س
 7. **مجموعات الظل:** معرّف الوثيقة = معرّف الأصل
    (`department_guides/{departmentId}`)، ولا تُعدَّل مجموعات الزملاء.
 
-8. **صفر `dart:io` في الموديول.** التطبيق يُنشر على الويب أيضاً، و`File`
+8. **إقلاع الويب محميّ بطبقتين.** `lib/core/startup/` يمسك أعطال ما بعد
+   `main()` (مهلة + شاشة خطأ)، و`web/index.html` يمسك أعطال ما **قبله**
+   (تُجلب حزم Firebase JS قبل تشغيل أي كود Dart). لا تحذف أياً منهما.
+
+9. **صفر `dart:io` في الموديول.** التطبيق يُنشر على الويب أيضاً، و`File`
    هناك ترمي `UnsupportedError`. الملفات تُمرَّر كـ`UploadFile`
    (اسم + بايتات) والمعاينة بـ`MemoryImage` لا `FileImage`.
 

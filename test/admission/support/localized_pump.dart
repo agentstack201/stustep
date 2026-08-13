@@ -27,10 +27,14 @@ Future<void> initLocalizationForTests() async {
 ///
 /// [locale] تسمح باختبار اللغتين على نفس الودجت، وهو ما يكشف النصوص
 /// المكتوبة داخل الكود: النص المكتوب لا يتغيّر بتغيّر اللغة.
+/// [isFullScreen] للودجت التي تبني `Scaffold` بنفسها. تغليفها بغلافنا
+/// يضعها داخل تمرير بارتفاع غير محدود فتفشل بتأكيد تخطيط لا علاقة له بما
+/// نريد فحصه.
 Future<void> pumpLocalized(
   WidgetTester tester,
   Widget child, {
   Locale locale = const Locale('ar'),
+  bool isFullScreen = false,
 }) async {
   final app = EasyLocalization(
     supportedLocales: const [Locale('ar'), Locale('en')],
@@ -42,7 +46,9 @@ Future<void> pumpLocalized(
         localizationsDelegates: context.localizationDelegates,
         supportedLocales: context.supportedLocales,
         locale: context.locale,
-        home: Scaffold(body: SingleChildScrollView(child: child)),
+        home: isFullScreen
+            ? child
+            : Scaffold(body: SingleChildScrollView(child: child)),
       ),
     ),
   );

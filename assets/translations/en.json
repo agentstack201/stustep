@@ -119,8 +119,6 @@
   "delete_message_title": "Delete Message",
   "delete_message_confirm": "Are you sure you want to permanently delete this message?",
   "cancel": "Cancel",
-  "choose_video": "Choose Video",
-  "choose_docs": "Choose Document",
   "download_video": "Download Video",
   "downloading": "Downloading...",
   "downloaded": "Downloaded & Ready",
@@ -431,5 +429,12 @@
       "delete_confirm": "\"{title}\" will be permanently deleted. Are you sure?",
       "deleted": "Paper deleted"
     }
+  },
+  "startup": {
+    "error_title": "Could not reach app services",
+    "error_body": "We could not initialize the connection to the server. Check your internet connection and try again.",
+    "retry": "Try again",
+    "retrying": "Retrying…",
+    "details": "Technical details"
   }
 }
